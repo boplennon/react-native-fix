@@ -9,27 +9,27 @@
  * @providesModule NetInfo
  * @flow
  */
-'use strict';
+"use strict";
 
-const Map = require('Map');
-const NativeEventEmitter = require('NativeEventEmitter');
-const NativeModules = require('NativeModules');
-const Platform = require('Platform');
+const Map = require("Map");
+const NativeEventEmitter = require("NativeEventEmitter");
+const NativeModules = require("NativeModules");
+const Platform = require("Platform");
 const RCTNetInfo = NativeModules.NetInfo;
 
 const NetInfoEventEmitter = new NativeEventEmitter(RCTNetInfo);
 
-const DEVICE_CONNECTIVITY_EVENT = 'networkStatusDidChange';
+const DEVICE_CONNECTIVITY_EVENT = "networkStatusDidChange";
 
 type ChangeEventName = $Enum<{
-  change: string,
+  change: string
 }>;
 
 type ReachabilityStateIOS = $Enum<{
   cell: string,
   none: string,
   unknown: string,
-  wifi: string,
+  wifi: string
 }>;
 
 type ConnectivityStateAndroid = $Enum<{
@@ -52,24 +52,23 @@ type ConnectivityStateAndroid = $Enum<{
   MOBILE_EMERGENCY: string,
   PROXY: string,
   VPN: string,
-  UNKNOWN: string,
+  UNKNOWN: string
 }>;
-
 
 const _subscriptions = new Map();
 
 let _isConnected;
-if (Platform.OS === 'ios') {
-  _isConnected = function(
-    reachability: ReachabilityStateIOS,
-  ): bool {
-    return reachability !== 'none' && reachability !== 'unknown';
+if (Platform.OS === "ios") {
+  _isConnected = function(reachability: ReachabilityStateIOS): boolean {
+    return reachability !== "none" && reachability !== "unknown";
   };
-} else if (Platform.OS === 'android') {
-  _isConnected = function(
-      connectionType: ConnectivityStateAndroid,
-    ): bool {
-    return connectionType !== 'NONE' && connectionType !== 'UNKNOWN';
+} else if (Platform.OS === "android") {
+  _isConnected = function(connectionType: ConnectivityStateAndroid): boolean {
+    return (
+      connectionType !== "NONE" &&
+      connectionType !== "UNKNOWN" &&
+      connectionType !== ""
+    );
   };
 }
 
@@ -176,10 +175,10 @@ const NetInfo = {
   addEventListener(
     eventName: ChangeEventName,
     handler: Function
-  ): {remove: () => void} {
+  ): { remove: () => void } {
     const listener = NetInfoEventEmitter.addListener(
       DEVICE_CONNECTIVITY_EVENT,
-      (appStateData) => {
+      appStateData => {
         handler(appStateData.network_info);
       }
     );
@@ -192,10 +191,7 @@ const NetInfo = {
   /**
    * Removes the listener for network status changes.
    */
-  removeEventListener(
-    eventName: ChangeEventName,
-    handler: Function
-  ): void {
+  removeEventListener(eventName: ChangeEventName, handler: Function): void {
     const listener = _subscriptions.get(handler);
     if (!listener) {
       return;
@@ -222,24 +218,19 @@ const NetInfo = {
     addEventListener(
       eventName: ChangeEventName,
       handler: Function
-    ): {remove: () => void} {
-      const listener = (connection) => {
+    ): { remove: () => void } {
+      const listener = connection => {
         handler(_isConnected(connection));
       };
       _isConnectedSubscriptions.set(handler, listener);
-      NetInfo.addEventListener(
-        eventName,
-        listener
-      );
+      NetInfo.addEventListener(eventName, listener);
       return {
-        remove: () => NetInfo.isConnected.removeEventListener(eventName, handler)
+        remove: () =>
+          NetInfo.isConnected.removeEventListener(eventName, handler)
       };
     },
 
-    removeEventListener(
-      eventName: ChangeEventName,
-      handler: Function
-    ): void {
+    removeEventListener(eventName: ChangeEventName, handler: Function): void {
       const listener = _isConnectedSubscriptions.get(handler);
       NetInfo.removeEventListener(
         eventName,
@@ -252,17 +243,15 @@ const NetInfo = {
     },
 
     fetch(): Promise<any> {
-      return NetInfo.fetch().then(
-        (connection) => _isConnected(connection)
-      );
-    },
+      return NetInfo.fetch().then(connection => _isConnected(connection));
+    }
   },
 
   isConnectionExpensive(): Promise<boolean> {
-    return (
-      Platform.OS === 'android' ? RCTNetInfo.isConnectionMetered() : Promise.reject(new Error('Currently not supported on iOS'))
-    );
-  },
+    return Platform.OS === "android"
+      ? RCTNetInfo.isConnectionMetered()
+      : Promise.reject(new Error("Currently not supported on iOS"));
+  }
 };
 
 module.exports = NetInfo;

@@ -60,7 +60,7 @@
     if (testView.clipsToBounds) {
       if (clipView) {
         CGRect testRect = [clipView convertRect:clipRect toView:testView];
-        if (!CGRectContainsRect(testView.bounds, testRect)) {
+        if (!CGRectContainsRect(testView.bounds, testRect) && !CGRectIsEmpty(CGRectIntersection(testView.bounds, testRect))) {
           clipView = testView;
           clipRect = CGRectIntersection(testView.bounds, testRect);
         }
